@@ -13,6 +13,7 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 import { ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
+import { AppController } from './app.controller';
 
 @Module({
   imports: [
@@ -61,6 +62,7 @@ import { APP_GUARD } from '@nestjs/core';
     DashboardModule,
     ClientsModule,
   ],
+  controllers: [AppController],
   providers: [
     {
       provide: APP_GUARD,
