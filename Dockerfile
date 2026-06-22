@@ -22,4 +22,5 @@ COPY --from=builder /app/use-postgres.js ./use-postgres.js
 COPY --from=builder /app/use-sqlite.js ./use-sqlite.js
 
 EXPOSE 3001
+ENV PORT=3001
 CMD ["node", "dist/src/main"]
