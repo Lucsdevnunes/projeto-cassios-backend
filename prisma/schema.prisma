@@ -1,0 +1,122 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Perfil {
+  ADMIN
+  TECNICO
+}
+
+enum TipoEquipamento {
+  SPLIT
+  CASSETE
+  PISO_TETO
+  JANELA
+  VRF
+  MULTI_SPLIT
+  OUTROS
+}
+
+enum TipoFoto {
+  ANTES
+  DEPOIS
+}
+
+model Usuario {
+  id           String        @id @default(uuid())
+  nome         String
+  email        String        @unique
+  senhaHash    String
+  perfil       Perfil
+  ativo        Boolean       @default(true)
+  criadoEm     DateTime      @default(now())
+  deletedAt    DateTime?
+  equipamentos Equipamento[] @relation("CriadorEquipamento")
+  auditorias   Auditoria[]
+}
+
+model Equipamento {
+  id              String          @id @default(uuid())
+  codigoInterno   String          @unique
+  qrCode          String?
+  endereco        String
+  localInstalacao String
+  marca           String
+  modelo          String
+  numeroSerie     String
+  btu             Int
+  tipo            TipoEquipamento
+  dataInstalacao  DateTime
+  observacoes     String?
+  criadoPor       String
+  criador         Usuario         @relation("CriadorEquipamento", fields: [criadoPor], references: [id])
+  clienteId       String?
+  cliente         Cliente?        @relation(fields: [clienteId], references: [id])
+  criadoEm        DateTime        @default(now())
+  deletedAt       DateTime?
+  manutencoes     Manutencao[]
+
+  @@index([clienteId])
+  @@index([criadoPor])
+}
+
+model Cliente {
+  id           String        @id @default(uuid())
+  nome         String
+  documento    String?
+  telefone     String?
+  email        String?
+  qrCode       String?
+  criadoEm     DateTime      @default(now())
+  deletedAt    DateTime?
+  equipamentos Equipamento[]
+}
+
+model Manutencao {
+  id                    String      @id @default(uuid())
+  equipamentoId         String
+  equipamento           Equipamento @relation(fields: [equipamentoId], references: [id])
+  dataManutencao        DateTime
+  servicoRealizado      String
+  descricao             String
+  pecaTrocada           String?
+  quantidade            Int         @default(0)
+  tecnicoNome           String
+  tecnicoAssinatura     String // local path or S3 URL
+  contratanteNome       String
+  contratanteAssinatura String // local path or S3 URL
+  observacoes           String?
+  criadoEm              DateTime    @default(now())
+  deletedAt             DateTime?
+  fotos                 Foto[]
+
+  @@index([equipamentoId])
+}
+
+model Foto {
+  id           String     @id @default(uuid())
+  manutencaoId String
+  manutencao   Manutencao @relation(fields: [manutencaoId], references: [id])
+  tipo         TipoFoto
+  arquivo      String // local path or S3 URL
+  criadoEm     DateTime   @default(now())
+
+  @@index([manutencaoId])
+}
+
+model Auditoria {
+  id         String   @id @default(uuid())
+  usuarioId  String?
+  usuario    Usuario? @relation(fields: [usuarioId], references: [id])
+  acao       String
+  tabela     String
+  registroId String
+  ip         String
+  dataHora   DateTime @default(now())
+
+  @@index([usuarioId])
+}
