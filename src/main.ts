@@ -25,10 +25,25 @@ async function bootstrap() {
   // Configure CORS origins
   const allowedOrigins = process.env.ALLOWED_ORIGINS
     ? process.env.ALLOWED_ORIGINS.split(',')
-    : '*';
+    : [];
 
   app.enableCors({
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps, curl, etc.)
+      if (!origin) return callback(null, true);
+      
+      const isAllowed = allowedOrigins.includes('*') || 
+                        allowedOrigins.some(allowed => origin.startsWith(allowed)) || 
+                        origin === 'http://localhost' || 
+                        origin === 'https://localhost' || 
+                        origin.startsWith('capacitor://');
+                        
+      if (isAllowed) {
+        callback(null, true);
+      } else {
+        callback(new Error('Blocked by CORS'));
+      }
+    },
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
   });
@@ -58,7 +73,7 @@ async function bootstrap() {
 
   // Listen on port
   const port = process.env.PORT || 3001;
-  await app.listen(port);
+  await app.listen(port, '0.0.0.0');
   console.log(`Application is running on: http://localhost:${port}/api`);
 }
 bootstrap();
