@@ -19,7 +19,7 @@ export class ClientsService {
   async create(createClientDto: CreateClientDto, executorId: string, ip: string): Promise<EstablishmentResponseDto> {
     const uuid = uuidv4();
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-    const publicUrl = `${frontendUrl}/estabelecimento/${uuid}`;
+    const publicUrl = `${frontendUrl}/estabelecimento?id=${uuid}`;
 
     let qrCodeUrl = '';
     try {
@@ -95,7 +95,7 @@ export class ClientsService {
     // Dynamic QR Code generation for legacy data
     if (!client.qrCode || client.qrCode.startsWith('data:image/')) {
       const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-      const publicUrl = `${frontendUrl}/estabelecimento/${client.id}`;
+      const publicUrl = `${frontendUrl}/estabelecimento?id=${client.id}`;
       try {
         const qrCodeBuffer = await QRCode.toBuffer(publicUrl, {
           errorCorrectionLevel: 'H',
@@ -144,7 +144,7 @@ export class ClientsService {
     // Dynamic QR Code generation for legacy data
     if (!client.qrCode || client.qrCode.startsWith('data:image/')) {
       const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-      const publicUrl = `${frontendUrl}/estabelecimento/${client.id}`;
+      const publicUrl = `${frontendUrl}/estabelecimento?id=${client.id}`;
       try {
         const qrCodeBuffer = await QRCode.toBuffer(publicUrl, {
           errorCorrectionLevel: 'H',

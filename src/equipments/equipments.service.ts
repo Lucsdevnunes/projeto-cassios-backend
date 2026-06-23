@@ -32,7 +32,7 @@ export class EquipmentsService {
     let qrCodeUrl: string | null = null;
 
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-    const publicUrl = `${frontendUrl}/equipamento/${uuid}`;
+    const publicUrl = `${frontendUrl}/equipamento?id=${uuid}`;
 
     try {
       const qrCodeBuffer = await QRCode.toBuffer(publicUrl, {
@@ -134,7 +134,7 @@ export class EquipmentsService {
     // Lazy migration/generation of equipment QR code
     if (!equipment.qrCode || equipment.qrCode.startsWith('data:image/')) {
       const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-      const publicUrl = `${frontendUrl}/equipamento/${equipment.id}`;
+      const publicUrl = `${frontendUrl}/equipamento?id=${equipment.id}`;
       try {
         const qrCodeBuffer = await QRCode.toBuffer(publicUrl, {
           errorCorrectionLevel: 'H',
@@ -233,7 +233,7 @@ export class EquipmentsService {
     // Lazy migration/generation of equipment QR code
     if (!equipment.qrCode || equipment.qrCode.startsWith('data:image/')) {
       const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-      const publicUrl = `${frontendUrl}/equipamento/${equipment.id}`;
+      const publicUrl = `${frontendUrl}/equipamento?id=${equipment.id}`;
       try {
         const qrCodeBuffer = await QRCode.toBuffer(publicUrl, {
           errorCorrectionLevel: 'H',
@@ -301,7 +301,7 @@ export class EquipmentsService {
         // Independent now, generate individual QR Code if it doesn't have one or has a legacy base64 one
         if (!qrCode || qrCode.startsWith('data:image/')) {
           const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-          const publicUrl = `${frontendUrl}/equipamento/${id}`;
+          const publicUrl = `${frontendUrl}/equipamento?id=${id}`;
           try {
             const qrCodeBuffer = await QRCode.toBuffer(publicUrl, {
               errorCorrectionLevel: 'H',
