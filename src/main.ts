@@ -13,10 +13,31 @@ async function bootstrap() {
   // Trust proxy headers behind Cloudflare/Nginx gateways
   app.getHttpAdapter().getInstance().set('trust proxy', true);
 
-  // Use Helmet for security headers
+  // Use Helmet for security headers (OWASP A05)
   app.use(helmet({
-    contentSecurityPolicy: false, // API server, doesn't serve HTML UI
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'none'"],
+        scriptSrc: ["'self'"],
+        connectSrc: ["'self'", 'https://*.supabase.co', 'https://*.railway.app', 'https://sistema.emporiodoar.com.br'],
+        imgSrc: ["'self'", 'data:', 'https://*.supabase.co', 'https://*.supabase.in'],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        frameAncestors: ["'self'"], // Block Clickjacking (X-Frame-Options sibling)
+      },
+    },
     crossOriginEmbedderPolicy: false,
+    crossOriginOpenerPolicy: { policy: 'same-origin' },
+    crossOriginResourcePolicy: { policy: 'same-origin' },
+    dnsPrefetchControl: { allow: false },
+    frameguard: { action: 'sameorigin' }, // X-Frame-Options SAMEORIGIN
+    hsts: {
+      maxAge: 31536000, // 1 year
+      includeSubDomains: true,
+      preload: true,
+    },
+    ieNoOpen: true,
+    noSniff: true, // X-Content-Type-Options nosniff
+    referrerPolicy: { policy: 'no-referrer' },
   }));
 
   // Set global API prefix

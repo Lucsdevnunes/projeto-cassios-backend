@@ -12,9 +12,13 @@ export class AuthGuard implements CanActivate {
     if (!token) {
       throw new UnauthorizedException('Token de autenticação não fornecido');
     }
+    const secret = process.env.JWT_SECRET;
+    if (!secret || secret === 'super-secret-key-123') {
+      throw new UnauthorizedException('Configuração de segurança do servidor inválida (JWT_SECRET ausente)');
+    }
     try {
       const payload = await this.jwtService.verifyAsync(token, {
-        secret: process.env.JWT_SECRET || 'super-secret-key-123',
+        secret,
       });
       // Attach payload (id, email, nome, perfil) to the request object
       request['user'] = payload;

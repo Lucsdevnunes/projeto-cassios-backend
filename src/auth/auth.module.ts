@@ -11,10 +11,16 @@ import { ConfigService, ConfigModule } from '@nestjs/config';
       global: true,
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET') || 'super-secret-key-123',
-        signOptions: { expiresIn: '1d' },
-      }),
+      useFactory: (configService: ConfigService) => {
+        const secret = configService.get<string>('JWT_SECRET');
+        if (!secret || secret === 'super-secret-key-123') {
+          throw new Error('Configuração de segurança do servidor inválida: JWT_SECRET ausente ou inseguro.');
+        }
+        return {
+          secret,
+          signOptions: { expiresIn: '1d' },
+        };
+      },
     }),
   ],
   providers: [AuthService],

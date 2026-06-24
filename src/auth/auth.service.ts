@@ -159,8 +159,12 @@ export class AuthService {
     const { refreshToken } = refreshTokenDto;
 
     try {
+      const secret = process.env.JWT_SECRET;
+      if (!secret || secret === 'super-secret-key-123') {
+        throw new Error('Configuração de segurança do servidor inválida (JWT_SECRET ausente)');
+      }
       const payload = await this.jwtService.verifyAsync(refreshToken, {
-        secret: process.env.JWT_SECRET || 'super-secret-key-123',
+        secret,
       });
 
       const userId = payload.id;
