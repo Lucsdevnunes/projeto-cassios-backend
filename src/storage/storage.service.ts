@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import * as fs from 'fs';
 import * as path from 'path';
 import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
@@ -45,6 +45,18 @@ export class StorageService {
    * Uploads a file (buffer) and returns its accessible URL or path
    */
   async uploadFile(fileBuffer: Buffer, fileName: string, mimeType: string, bucketName?: string): Promise<string> {
+    // 1. Security validation: file size limit (max 10MB)
+    const MAX_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
+    if (fileBuffer.length > MAX_SIZE_BYTES) {
+      throw new BadRequestException('O arquivo excede o limite máximo permitido de 10MB.');
+    }
+
+    // 2. Security validation: strict MIME type whitelisting (images only)
+    const ALLOWED_MIME_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+    if (!ALLOWED_MIME_TYPES.includes(mimeType.toLowerCase())) {
+      throw new BadRequestException('Tipo de arquivo não permitido. Apenas imagens (PNG, JPEG, WEBP) são aceitas.');
+    }
+
     const targetBucket = bucketName || this.bucketName || 'uploads';
     const uniqueFileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}${path.extname(fileName) || '.jpg'}`;
 
