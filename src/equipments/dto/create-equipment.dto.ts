@@ -40,4 +40,14 @@ export class CreateEquipmentDto {
   @IsOptional()
   @IsString()
   observacoes?: string;
+
+  @IsOptional()
+  @IsInt({ message: 'Frequência de manutenção deve ser um número inteiro' })
+  @Min(1, { message: 'Frequência de manutenção deve ser de pelo menos 1 mês' })
+  @Type(() => Number)
+  frequenciaManutencao?: number;
+
+  @IsOptional()
+  @Type(() => Date)
+  proximaManutencao?: Date;
 }

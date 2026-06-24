@@ -81,6 +81,16 @@ export class MaintenanceService {
         }
       }
 
+      // Recalcular proximaManutencao no equipamento associado
+      const freq = equipment.frequenciaManutencao || 6;
+      const nextDate = new Date(dataManutencao);
+      nextDate.setMonth(nextDate.getMonth() + freq);
+
+      await tx.equipamento.update({
+        where: { id: equipamentoId },
+        data: { proximaManutencao: nextDate },
+      });
+
       return record;
     });
 

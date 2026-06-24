@@ -51,6 +51,14 @@ export class EquipmentsService {
       throw new Error('Erro ao gerar imagem do QR Code');
     }
 
+    const frequencia = createEquipmentDto.frequenciaManutencao ?? 6;
+    let proxima = createEquipmentDto.proximaManutencao ? new Date(createEquipmentDto.proximaManutencao) : null;
+    if (!proxima) {
+      const baseDate = new Date(createEquipmentDto.dataInstalacao);
+      baseDate.setMonth(baseDate.getMonth() + frequencia);
+      proxima = baseDate;
+    }
+
     const equipment = await this.prisma.equipamento.create({
       data: {
         id: uuid,
@@ -67,6 +75,8 @@ export class EquipmentsService {
         observacoes: createEquipmentDto.observacoes,
         criadoPor: executorId,
         clienteId: clienteId || null,
+        frequenciaManutencao: frequencia,
+        proximaManutencao: proxima,
       },
     });
 
@@ -321,11 +331,25 @@ export class EquipmentsService {
       }
     }
 
+    let proxima = updateEquipmentDto.proximaManutencao ? new Date(updateEquipmentDto.proximaManutencao) : undefined;
+
+    if (updateEquipmentDto.frequenciaManutencao !== undefined && updateEquipmentDto.proximaManutencao === undefined) {
+      const lastMaintenance = await this.prisma.manutencao.findFirst({
+        where: { equipamentoId: id, deletedAt: null },
+        orderBy: { dataManutencao: 'desc' },
+      });
+      const baseDate = lastMaintenance ? new Date(lastMaintenance.dataManutencao) : new Date(updateEquipmentDto.dataInstalacao ?? equipment.dataInstalacao);
+      const nextDate = new Date(baseDate);
+      nextDate.setMonth(nextDate.getMonth() + updateEquipmentDto.frequenciaManutencao);
+      proxima = nextDate;
+    }
+
     const updated = await this.prisma.equipamento.update({
       where: { id },
       data: {
         ...updateEquipmentDto,
         qrCode,
+        proximaManutencao: proxima,
       },
     });
 

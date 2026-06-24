@@ -58,6 +58,8 @@ model Equipamento {
   cliente         Cliente?        @relation(fields: [clienteId], references: [id])
   criadoEm        DateTime        @default(now())
   deletedAt       DateTime?
+  frequenciaManutencao Int          @default(6)
+  proximaManutencao    DateTime?
   manutencoes     Manutencao[]
 
   @@index([clienteId])

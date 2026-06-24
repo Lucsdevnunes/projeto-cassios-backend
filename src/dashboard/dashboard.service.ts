@@ -64,6 +64,8 @@ export class DashboardService {
         modelo: true,
         localInstalacao: true,
         dataInstalacao: true,
+        frequenciaManutencao: true,
+        proximaManutencao: true,
         manutencoes: {
           where: { deletedAt: null },
           select: { dataManutencao: true },
@@ -85,6 +87,14 @@ export class DashboardService {
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
       const diffMonths = diffDays / 30;
 
+      // Fallback calculation for proximaManutencao if not set
+      let proxima = eq.proximaManutencao ? new Date(eq.proximaManutencao) : null;
+      if (!proxima) {
+        const base = new Date(lastActionDate);
+        base.setMonth(base.getMonth() + (eq.frequenciaManutencao ?? 6));
+        proxima = base;
+      }
+
       const equipmentData = {
         id: eq.id,
         codigoInterno: eq.codigoInterno,
@@ -92,22 +102,26 @@ export class DashboardService {
         modelo: eq.modelo,
         localInstalacao: eq.localInstalacao,
         lastMaintenance: lastActionDate,
+        proximaManutencao: proxima,
         monthsSinceLast: Math.round(diffMonths * 10) / 10,
       };
 
-      // Classify alerts
-      if (diffMonths >= 12) {
-        delayed12Months.push(equipmentData);
-      } else if (diffMonths >= 6) {
-        delayed6Months.push(equipmentData);
-      } else if (diffMonths >= 3) {
-        delayed3Months.push(equipmentData);
-      }
+      const isOverdue = now.getTime() > proxima.getTime();
 
-      // Upcoming preventive: if maintenance is due in the next 15 days for a 6-month cycle
-      // meaning months elapsed is between 5.5 and 6 months
-      if (diffMonths >= 5.5 && diffMonths < 6) {
-        upcomingPreventives.push(equipmentData);
+      if (isOverdue) {
+        if (diffMonths >= 12) {
+          delayed12Months.push(equipmentData);
+        } else if (diffMonths >= 6) {
+          delayed6Months.push(equipmentData);
+        } else if (diffMonths >= 3) {
+          delayed3Months.push(equipmentData);
+        }
+      } else {
+        const diffToNext = proxima.getTime() - now.getTime();
+        const daysToNext = Math.ceil(diffToNext / (1000 * 60 * 60 * 24));
+        if (daysToNext >= 0 && daysToNext <= 15) {
+          upcomingPreventives.push(equipmentData);
+        }
       }
     }
 
