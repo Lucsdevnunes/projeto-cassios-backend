@@ -1,4 +1,5 @@
 import { IsNotEmpty, IsUUID, IsDateString, IsOptional, IsString, IsInt, Min, IsArray } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class CreateMaintenanceDto {
   @IsUUID('4', { message: 'ID do equipamento inválido' })
@@ -22,6 +23,7 @@ export class CreateMaintenanceDto {
   pecaTrocada?: string;
 
   @IsOptional()
+  @Type(() => Number)
   @IsInt()
   @Min(0)
   quantidade?: number;
