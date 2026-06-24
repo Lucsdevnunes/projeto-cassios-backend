@@ -164,7 +164,7 @@ export class StorageService {
       }
     }
 
-    const privateBuckets = []; // All our buckets are configured as public in Supabase to allow public timeline access
+    const privateBuckets: string[] = []; // All our buckets are configured as public in Supabase to allow public timeline access
     if (bucketName && fileKey && privateBuckets.includes(bucketName)) {
       if (this.s3Client) {
         try {
