@@ -5,6 +5,7 @@ import { AuditService } from '../audit/audit.service';
 import { CreateMaintenanceDto } from './dto/create-maintenance.dto';
 import { MaintenanceResponseDto } from './dto/maintenance-response.dto';
 import { TipoFoto } from '@prisma/client';
+import { EquipmentsService } from '../equipments/equipments.service';
 
 @Injectable()
 export class MaintenanceService {
@@ -97,6 +98,9 @@ export class MaintenanceService {
     // 6. Log audit trail
     await this.audit.log(executorId, 'CREATE', 'manutencoes', maintenance.id, ip);
 
+    // Invalidate public equipment cache
+    EquipmentsService.clearCache(equipamentoId);
+
     // Return full maintenance record including photos
     const result = await this.prisma.manutencao.findUnique({
       where: { id: maintenance.id },
@@ -168,6 +172,8 @@ export class MaintenanceService {
       where: { id },
       data: { deletedAt: new Date() },
     });
+
+    EquipmentsService.clearCache(maintenance.equipamentoId);
 
     await this.audit.log(executorId, 'DELETE', 'manutencoes', id, ip);
 

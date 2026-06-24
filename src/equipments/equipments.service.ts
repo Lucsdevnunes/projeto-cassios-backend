@@ -10,6 +10,12 @@ import * as QRCode from 'qrcode';
 
 @Injectable()
 export class EquipmentsService {
+  static publicCache = new Map<string, { data: any; expiresAt: number }>();
+
+  static clearCache(id: string) {
+    EquipmentsService.publicCache.delete(id);
+  }
+
   constructor(
     private prisma: PrismaService,
     private audit: AuditService,
@@ -189,6 +195,11 @@ export class EquipmentsService {
    * Returns details and timeline sorted chronologically.
    */
   async findOnePublic(id: string): Promise<EquipmentResponseDto> {
+    const cached = EquipmentsService.publicCache.get(id);
+    if (cached && cached.expiresAt > Date.now()) {
+      return cached.data;
+    }
+
     const equipment = await this.prisma.equipamento.findFirst({
       where: { id, deletedAt: null },
       select: {
@@ -267,15 +278,21 @@ export class EquipmentsService {
     }
 
     if (equipment.manutencoes && equipment.manutencoes.length > 0) {
-      for (const m of equipment.manutencoes) {
-        await this.transformMaintenanceUrls(m);
-      }
+      await Promise.all(
+        equipment.manutencoes.map((m) => this.transformMaintenanceUrls(m))
+      );
     }
 
     // Generate presigned URL for QR code
     if (equipment.qrCode) {
       equipment.qrCode = await this.storage.getPresignedUrl(equipment.qrCode);
     }
+
+    // Save to cache for 10 minutes
+    EquipmentsService.publicCache.set(id, {
+      data: equipment,
+      expiresAt: Date.now() + 600000,
+    });
 
     return equipment;
   }
@@ -353,6 +370,8 @@ export class EquipmentsService {
       },
     });
 
+    EquipmentsService.clearCache(id);
+
     await this.audit.log(executorId, 'UPDATE', 'equipamentos', updated.id, ip);
     if (qrCode !== equipment.qrCode && qrCode) {
       await this.audit.log(executorId, 'GENERATE_QRCODE', 'equipamentos', updated.id, ip);
@@ -375,6 +394,8 @@ export class EquipmentsService {
       data: { deletedAt: new Date() },
     });
 
+    EquipmentsService.clearCache(id);
+
     await this.audit.log(executorId, 'DELETE', 'equipamentos', equipment.id, ip);
 
     return { success: true, message: 'Equipamento excluído com sucesso' };
@@ -382,13 +403,16 @@ export class EquipmentsService {
 
   private async transformMaintenanceUrls(m: any) {
     if (!m) return m;
-    m.tecnicoAssinatura = await this.storage.getPresignedUrl(m.tecnicoAssinatura);
-    m.contratanteAssinatura = await this.storage.getPresignedUrl(m.contratanteAssinatura);
+    const promises = [
+      this.storage.getPresignedUrl(m.tecnicoAssinatura).then(url => m.tecnicoAssinatura = url),
+      this.storage.getPresignedUrl(m.contratanteAssinatura).then(url => m.contratanteAssinatura = url)
+    ];
     if (m.fotos && m.fotos.length > 0) {
       for (const foto of m.fotos) {
-        foto.arquivo = await this.storage.getPresignedUrl(foto.arquivo);
+        promises.push(this.storage.getPresignedUrl(foto.arquivo).then(url => foto.arquivo = url));
       }
     }
+    await Promise.all(promises);
     return m;
   }
 }
