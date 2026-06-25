@@ -95,6 +95,7 @@ model Manutencao {
   criadoEm              DateTime    @default(now())
   deletedAt             DateTime?
   fotos                 Foto[]
+  materiais             ManutencaoMaterial[]
 
   @@index([equipamentoId])
 }
@@ -122,3 +123,29 @@ model Auditoria {
 
   @@index([usuarioId])
 }
+
+model PecaMaterial {
+  id        String               @id @default(uuid())
+  nome      String               @unique
+  categoria String
+  unidade   String               // UN, M, KG, L
+  ativo     Boolean              @default(true)
+  criadoEm  DateTime             @default(now())
+  usos      ManutencaoMaterial[]
+}
+
+model ManutencaoMaterial {
+  id            String       @id @default(uuid())
+  manutencaoId  String
+  manutencao    Manutencao   @relation(fields: [manutencaoId], references: [id], onDelete: Cascade)
+  materialId    String
+  material      PecaMaterial @relation(fields: [materialId], references: [id])
+  quantidade    Float        // Float supports decimal values
+  observacao    String?
+  criadoPor     String
+  criadoEm      DateTime     @default(now())
+
+  @@index([manutencaoId])
+  @@index([materialId])
+}
+

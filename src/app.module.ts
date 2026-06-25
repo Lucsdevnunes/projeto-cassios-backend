@@ -9,6 +9,7 @@ import { EquipmentsModule } from './equipments/equipments.module';
 import { MaintenanceModule } from './maintenance/maintenance.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { ClientsModule } from './clients/clients.module';
+import { MaterialsModule } from './materials/materials.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 import { ConfigService } from '@nestjs/config';
@@ -61,6 +62,7 @@ import { AppController } from './app.controller';
     MaintenanceModule,
     DashboardModule,
     ClientsModule,
+    MaterialsModule,
   ],
   controllers: [AppController],
   providers: [

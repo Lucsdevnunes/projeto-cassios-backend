@@ -16,7 +16,7 @@ export class MaintenanceService {
   ) {}
 
   async create(createMaintenanceDto: CreateMaintenanceDto, executorId: string, ip: string): Promise<MaintenanceResponseDto> {
-    const { equipamentoId, dataManutencao, servicoRealizado, descricao, pecaTrocada, quantidade, tecnicoNome, tecnicoAssinatura, contratanteNome, contratanteAssinatura, observacoes, fotosAntes, fotosDepois } = createMaintenanceDto;
+    const { equipamentoId, dataManutencao, servicoRealizado, descricao, pecaTrocada, quantidade, tecnicoNome, tecnicoAssinatura, contratanteNome, contratanteAssinatura, observacoes, fotosAntes, fotosDepois, materiais } = createMaintenanceDto;
 
     // 1. Verify equipment exists
     const equipment = await this.prisma.equipamento.findFirst({
@@ -82,6 +82,22 @@ export class MaintenanceService {
         }
       }
 
+      // 5.1. Associate pieces/materials used (if any)
+      if (materiais && materiais.length > 0) {
+        for (const mat of materiais) {
+          const relation = await tx.manutencaoMaterial.create({
+            data: {
+              manutencaoId: record.id,
+              materialId: mat.materialId,
+              quantidade: mat.quantidade,
+              observacao: mat.observacao || null,
+              criadoPor: tecnicoNome,
+            },
+          });
+          await this.audit.log(executorId, 'ASSOCIATE_MATERIAL', 'manutencao_materiais', relation.id, ip);
+        }
+      }
+
       // Recalcular proximaManutencao no equipamento associado
       const freq = equipment.frequenciaManutencao || 6;
       const nextDate = new Date(dataManutencao);
@@ -101,10 +117,17 @@ export class MaintenanceService {
     // Invalidate public equipment cache
     EquipmentsService.clearCache(equipamentoId);
 
-    // Return full maintenance record including photos
+    // Return full maintenance record including photos and materials
     const result = await this.prisma.manutencao.findUnique({
       where: { id: maintenance.id },
-      include: { fotos: true },
+      include: {
+        fotos: true,
+        materiais: {
+          include: {
+            material: true,
+          },
+        },
+      },
     });
     return this.transformMaintenanceUrls(result);
   }
@@ -120,6 +143,11 @@ export class MaintenanceService {
           select: { codigoInterno: true, marca: true, modelo: true, localInstalacao: true },
         },
         fotos: true,
+        materiais: {
+          include: {
+            material: true,
+          },
+        },
       },
       orderBy: { dataManutencao: 'desc' },
       skip,
@@ -137,6 +165,11 @@ export class MaintenanceService {
       include: {
         equipamento: true,
         fotos: true,
+        materiais: {
+          include: {
+            material: true,
+          },
+        },
       },
     });
 

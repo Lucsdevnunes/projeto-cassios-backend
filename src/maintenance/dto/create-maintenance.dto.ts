@@ -1,5 +1,19 @@
-import { IsNotEmpty, IsUUID, IsDateString, IsOptional, IsString, IsInt, Min, IsArray } from 'class-validator';
+import { IsNotEmpty, IsUUID, IsDateString, IsOptional, IsString, IsInt, Min, IsArray, IsNumber, IsPositive, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
+
+export class CreateMaintenanceMaterialDto {
+  @IsUUID('4', { message: 'ID do material inválido' })
+  @IsNotEmpty({ message: 'ID do material é obrigatório' })
+  materialId: string;
+
+  @IsNumber({}, { message: 'Quantidade deve ser um número' })
+  @IsPositive({ message: 'Quantidade deve ser maior que zero' })
+  quantidade: number;
+
+  @IsOptional()
+  @IsString()
+  observacao?: string;
+}
 
 export class CreateMaintenanceDto {
   @IsUUID('4', { message: 'ID do equipamento inválido' })
@@ -57,4 +71,10 @@ export class CreateMaintenanceDto {
   @IsArray()
   @IsString({ each: true })
   fotosDepois?: string[]; // Array of Base64 strings for after photos
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateMaintenanceMaterialDto)
+  materiais?: CreateMaintenanceMaterialDto[];
 }

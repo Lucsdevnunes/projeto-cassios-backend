@@ -25,4 +25,18 @@ export class MaintenanceResponseDto {
     tipo: string;
     arquivo: string;
   }[];
+
+  materiais?: {
+    id: string;
+    quantidade: number;
+    observacao?: string | null;
+    criadoPor: string;
+    criadoEm?: Date;
+    material: {
+      id: string;
+      nome: string;
+      categoria: string;
+      unidade: string;
+    };
+  }[];
 }

@@ -137,6 +137,11 @@ export class EquipmentsService {
           where: { deletedAt: null },
           include: {
             fotos: true,
+            materiais: {
+              include: {
+                material: true,
+              },
+            },
           },
           orderBy: { dataManutencao: 'desc' }, // Descending for administrative listings
         },
@@ -239,6 +244,23 @@ export class EquipmentsService {
                 id: true,
                 tipo: true,
                 arquivo: true,
+              },
+            },
+            materiais: {
+              select: {
+                id: true,
+                quantidade: true,
+                observacao: true,
+                criadoPor: true,
+                criadoEm: true,
+                material: {
+                  select: {
+                    id: true,
+                    nome: true,
+                    categoria: true,
+                    unidade: true,
+                  },
+                },
               },
             },
           },
